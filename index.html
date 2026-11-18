@@ -620,19 +620,28 @@ NOTIFY pgrst, 'reload schema';</textarea>
                     const imgSrc = item.img || `https://placehold.co/300x300/141210/D49A4A?text=${encodeURIComponent(fallbackLabel)}`;
                     const slotCursor = isAdminLoggedIn ? 'cursor-pointer hover:ring-2 hover:ring-brave-gold' : '';
                     const slotTitle = isAdminLoggedIn ? 'title="Clique para trocar esta foto na nuvem"' : '';
+                    const isSoldOut = Boolean(item.soldOut);
+                    const soldOutCardClass = isSoldOut ? 'opacity-65 grayscale-[35%]' : '';
+                    const soldOutImgClass = isSoldOut ? 'grayscale opacity-75' : '';
+                    const topBadgeHTML = isSoldOut
+                        ? `<div class="absolute -top-2 right-3 bg-neutral-800 border border-red-500/70 text-red-400 font-display font-bold text-[9px] sm:text-[10px] tracking-widest uppercase px-2 py-0.5 rounded shadow">Esgotado</div>`
+                        : (item.badge ? `<div class="absolute -top-2 right-3 ${item.style === 'fire' ? 'bg-gradient-to-r from-brave-ember to-brave-fire text-white' : 'bg-gradient-to-r from-brave-gold to-brave-copper text-brave-black'} font-display font-bold text-[9px] sm:text-[10px] tracking-widest uppercase px-2 py-0.5 rounded shadow">${escapeHtml(item.badge)}</div>` : '');
+                    const priceHTML = isSoldOut
+                        ? `<span class="font-display text-sm sm:text-base font-bold text-red-400/90 line-through whitespace-nowrap">${escapeHtml(item.price)}</span>`
+                        : `<span class="font-display text-base sm:text-lg font-bold ${item.style === 'gold' ? 'text-brave-cream' : (item.style === 'fire' ? 'text-brave-fire' : 'text-brave-gold')} whitespace-nowrap">${escapeHtml(item.price)}</span>`;
 
                     if (item.style === 'gold') {
                         return `
-                        <article class="supreme-card relative flex items-center gap-3 rounded-xl p-2 pr-3.5 transition-all">
-                            ${item.badge ? `<div class="absolute -top-2 right-3 bg-gradient-to-r from-brave-gold to-brave-copper text-brave-black font-display font-bold text-[9px] sm:text-[10px] tracking-widest uppercase px-2 py-0.5 rounded shadow">${escapeHtml(item.badge)}</div>` : ''}
+                        <article class="supreme-card ${soldOutCardClass} relative flex items-center gap-3 rounded-xl p-2 pr-3.5 transition-all">
+                            ${topBadgeHTML}
                             <div onclick="triggerSingleUpload('${imgSlotId}')" ${slotTitle} class="photo-slot ${slotCursor} w-[66px] h-[66px] sm:w-[72px] sm:h-[72px] rounded-lg overflow-hidden flex-shrink-0 border-2 border-brave-gold/70 bg-black shadow-inner flex items-center justify-center">
-                                <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-110" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
+                                <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-110 ${soldOutImgClass}" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
                             </div>
                             <div class="flex-1 min-w-0 pt-0.5">
                                 <div class="flex items-baseline justify-between">
                                     <h2 class="font-display text-base sm:text-lg font-bold tracking-wide text-brave-gold uppercase">${escapeHtml(item.name)}</h2>
                                     <span class="price-leader"></span>
-                                    <span class="font-display text-base sm:text-lg font-bold text-brave-cream whitespace-nowrap">${escapeHtml(item.price)}</span>
+                                    ${priceHTML}
                                 </div>
                                 <p class="text-[11px] sm:text-xs text-brave-cream/90 leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
                             </div>
@@ -641,16 +650,16 @@ NOTIFY pgrst, 'reload schema';</textarea>
 
                     if (item.style === 'fire') {
                         return `
-                        <article class="bigboss-card relative flex items-center gap-3 rounded-xl p-2 pr-3.5 transition-all">
-                            ${item.badge ? `<div class="absolute -top-2 right-3 bg-gradient-to-r from-brave-ember to-brave-fire text-white font-display font-bold text-[9px] sm:text-[10px] tracking-widest uppercase px-2 py-0.5 rounded shadow">${escapeHtml(item.badge)}</div>` : ''}
+                        <article class="bigboss-card ${soldOutCardClass} relative flex items-center gap-3 rounded-xl p-2 pr-3.5 transition-all">
+                            ${topBadgeHTML}
                             <div onclick="triggerSingleUpload('${imgSlotId}')" ${slotTitle} class="photo-slot ${slotCursor} w-[68px] h-[68px] sm:w-[74px] sm:h-[74px] rounded-lg overflow-hidden flex-shrink-0 border-2 border-brave-fire/80 bg-black shadow-lg flex items-center justify-center">
-                                <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-105" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
+                                <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-105 ${soldOutImgClass}" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
                             </div>
                             <div class="flex-1 min-w-0 pt-0.5">
                                 <div class="flex items-baseline justify-between">
                                     <h2 class="font-display text-base sm:text-lg font-bold tracking-wider text-white uppercase flex items-center gap-1.5">${escapeHtml(item.name)}</h2>
                                     <span class="price-leader"></span>
-                                    <span class="font-display text-base sm:text-lg font-bold text-brave-fire whitespace-nowrap">${escapeHtml(item.price)}</span>
+                                    ${priceHTML}
                                 </div>
                                 <p class="text-[11px] sm:text-xs text-brave-cream/90 leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
                             </div>
@@ -658,15 +667,16 @@ NOTIFY pgrst, 'reload schema';</textarea>
                     }
 
                     return `
-                    <article class="group flex items-center gap-3 bg-brave-charcoal/85 border border-brave-gold/25 rounded-xl p-2 pr-3 shadow-md transition-all">
+                    <article class="group ${soldOutCardClass} relative flex items-center gap-3 bg-brave-charcoal/85 border border-brave-gold/25 rounded-xl p-2 pr-3 shadow-md transition-all">
+                        ${topBadgeHTML}
                         <div onclick="triggerSingleUpload('${imgSlotId}')" ${slotTitle} class="photo-slot ${slotCursor} w-16 h-16 sm:w-[66px] sm:h-[66px] rounded-lg overflow-hidden flex-shrink-0 border border-brave-gold/35 bg-black relative flex items-center justify-center">
-                            <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-105" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
+                            <img id="${imgSlotId}" crossorigin="anonymous" src="${escapeHtml(imgSrc)}" alt="${escapeHtml(item.name)}" class="w-full h-full object-cover object-center scale-105 ${soldOutImgClass}" onerror="window.handleImgError && window.handleImgError(this, '${fallbackLabel}')">
                         </div>
                         <div class="flex-1 min-w-0">
                             <div class="flex items-baseline justify-between">
                                 <h2 class="font-display text-base sm:text-lg font-bold tracking-wide text-brave-cream uppercase">${escapeHtml(item.name)}</h2>
                                 <span class="price-leader"></span>
-                                <span class="font-display text-base sm:text-lg font-bold text-brave-gold whitespace-nowrap">${escapeHtml(item.price)}</span>
+                                ${priceHTML}
                             </div>
                             <p class="text-[11px] sm:text-xs text-brave-muted leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
                         </div>
@@ -675,7 +685,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
             });
         }
 
-        // Renderiza os cartões de edição, cadastro e remoção no modal Admin
+        // Renderiza os cartões de edição, ordenação, disponibilidade, cadastro e remoção no modal Admin
         function renderAdminItemsEditor() {
             ['lanches', 'bebidas', 'porcoes'].forEach(category => {
                 const container = document.getElementById(`admin-items-list-${category}`);
@@ -688,9 +698,16 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 }
 
                 container.innerHTML = list.map((item, idx) => `
-                    <div class="bg-black/50 p-3.5 rounded-xl border border-brave-gold/25 space-y-2">
-                        <div class="flex items-center justify-between gap-2">
-                            <span class="font-display text-sm font-bold text-brave-gold uppercase">${idx + 1}º Item • ${escapeHtml(item.name || 'Novo Item')}</span>
+                    <div class="bg-black/50 p-3.5 rounded-xl border ${item.soldOut ? 'border-red-500/45' : 'border-brave-gold/25'} space-y-2">
+                        <div class="flex flex-wrap items-center justify-between gap-2">
+                            <div class="flex items-center gap-1.5">
+                                <div class="flex items-center gap-1 mr-1">
+                                    <button type="button" onclick="moveMenuItem('${category}', ${idx}, -1)" ${idx === 0 ? 'disabled' : ''} title="Subir posição" class="bg-brave-charcoal hover:bg-brave-gold/25 disabled:opacity-30 text-brave-gold border border-brave-gold/30 w-6 h-6 rounded flex items-center justify-center font-bold cursor-pointer disabled:cursor-not-allowed">↑</button>
+                                    <button type="button" onclick="moveMenuItem('${category}', ${idx}, 1)" ${idx === list.length - 1 ? 'disabled' : ''} title="Descer posição" class="bg-brave-charcoal hover:bg-brave-gold/25 disabled:opacity-30 text-brave-gold border border-brave-gold/30 w-6 h-6 rounded flex items-center justify-center font-bold cursor-pointer disabled:cursor-not-allowed">↓</button>
+                                </div>
+                                <span class="font-display text-sm font-bold text-brave-gold uppercase">${idx + 1}º • ${escapeHtml(item.name || 'Novo Item')}</span>
+                                ${item.soldOut ? '<span class="text-[10px] bg-red-950 text-red-300 border border-red-500/40 px-1.5 py-0.5 rounded uppercase font-bold">Esgotado</span>' : ''}
+                            </div>
                             <div class="flex items-center gap-1.5">
                                 <label class="bg-brave-gold hover:bg-brave-copper text-black font-semibold px-2.5 py-1 rounded cursor-pointer text-[11px]">
                                     Trocar Foto
@@ -711,7 +728,14 @@ NOTIFY pgrst, 'reload schema';</textarea>
                                 <input type="text" value="${escapeHtml(item.price)}" oninput="updateLocalItemField('${category}', '${item.id}', 'price', this.value)" class="w-full bg-black/80 border border-brave-gold/30 rounded px-2.5 py-1.5 text-brave-gold font-bold">
                             </div>
                         </div>
-                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-brave-muted uppercase mb-0.5">Disponibilidade</label>
+                                <select onchange="toggleItemSoldOut('${category}', '${item.id}', this.value === 'true')" class="w-full bg-black/80 border ${item.soldOut ? 'border-red-500/60 text-red-400' : 'border-emerald-500/50 text-emerald-400'} font-semibold rounded px-2.5 py-1.5">
+                                    <option value="false" ${!item.soldOut ? 'selected' : ''}>● Disponível</option>
+                                    <option value="true" ${item.soldOut ? 'selected' : ''}>✕ Esgotado</option>
+                                </select>
+                            </div>
                             <div>
                                 <label class="block text-[10px] text-brave-muted uppercase mb-0.5">Destaque Visual</label>
                                 <select onchange="updateLocalItemField('${category}', '${item.id}', 'style', this.value)" class="w-full bg-black/80 border border-brave-gold/30 rounded px-2.5 py-1.5 text-white">
@@ -734,6 +758,32 @@ NOTIFY pgrst, 'reload schema';</textarea>
             });
         }
 
+        function moveMenuItem(category, index, direction) {
+            const list = menuState.items[category] || [];
+            const targetIndex = index + direction;
+            if (targetIndex < 0 || targetIndex >= list.length) return;
+            const [movedItem] = list.splice(index, 1);
+            list.splice(targetIndex, 0, movedItem);
+            switchMenuPage(category);
+            renderAdminItemsEditor();
+            renderPublicMenu();
+            syncStateSilently();
+            showToast('Ordem atualizada e sincronizada na nuvem!');
+        }
+
+        function toggleItemSoldOut(category, itemId, isSoldOut) {
+            const list = menuState.items[category] || [];
+            const target = list.find(i => i.id === itemId);
+            if (target) {
+                target.soldOut = isSoldOut;
+                switchMenuPage(category);
+                renderAdminItemsEditor();
+                renderPublicMenu();
+                syncStateSilently();
+                showToast(isSoldOut ? 'Item marcado como ESGOTADO na nuvem!' : 'Item marcado como DISPONÍVEL na nuvem!');
+            }
+        }
+
         function updateLocalItemField(category, itemId, field, value) {
             const list = menuState.items[category] || [];
             const target = list.find(i => i.id === itemId);
@@ -753,6 +803,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 desc: 'Descrição dos ingredientes.',
                 badge: '',
                 style: 'default',
+                soldOut: false,
                 img: 'https://placehold.co/300x300/141210/D49A4A?text=NOVO'
             });
             switchMenuPage(category);
