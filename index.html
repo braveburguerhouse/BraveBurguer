@@ -1208,6 +1208,9 @@ NOTIFY pgrst, 'reload schema';</textarea>
                     if (dbError) throw dbError;
 
                     renderPublicMenu();
+                    if (!document.getElementById('photoManagerModal').classList.contains('hidden')) {
+                        renderAdminItemsEditor();
+                    }
                 }
 
                 showToast('Foto atualizada para todos os dispositivos!');
@@ -1216,16 +1219,47 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 showToast('Erro ao salvar: verifique permissões no Supabase.');
             }
         }
+        // 4. Atualização em TEMPO REAL via HTTP rápido + sincronização instantânea entre abas
+        function startAutoSync() {
+            // Sincroniza imediatamente entre abas/janelas no mesmo navegador
+            try {
+                const bc = new BroadcastChannel('brave_burger_sync');
+                bc.onmessage = () => {
+                    const adminModal = document.getElementById('photoManagerModal');
+                    if (!adminModal || adminModal.classList.contains('hidden')) {
+                        fetchMenuPhotos();
+                    }
+                };
+            } catch (_) {}
 
-        // Função para exibir mensagem discreta na tela
-        function showToast(message) {
-            const toast = document.getElementById('toastMessage');
-            const toastText = document.getElementById('toastText');
-            toastText.textContent = message;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => {
-                toast.classList.add('opacity-0');
-            }, 3500);
+            // Atualiza imediatamente ao abrir ou voltar para o cardápio no celular
+            document.addEventListener('visibilitychange', () => {
+                if (document.visibilityState === 'visible') {
+                    const adminModal = document.getElementById('photoManagerModal');
+                    if (!adminModal || adminModal.classList.contains('hidden')) {
+                        fetchMenuPhotos();
+                    }
+                }
+            });
+
+            // Sincronização contínua via HTTP (sem WebSocket, compatível com Canvas e GitHub Pages)
+            setInterval(async () => {
+                const adminModal = document.getElementById('photoManagerModal');
+                if (adminModal && !adminModal.classList.contains('hidden')) {
+                    return;
+                }
+                try {
+                    const { data, error } = await supabaseClient
+                        .from('cardapio_fotos')
+                        .select('slot_id, image_url');
+
+                    if (!error && data && data.length > 0) {
+                        applyMenuRecords(data);
+                    }
+                } catch (_) {
+                    // Ignora falhas silenciosas de rede em segundo plano
+                }
+            }, 2500);
         }
 
         // Exporta o cardápio em alta resolução (1080x1350px - Proporção 4:5)
