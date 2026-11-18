@@ -126,6 +126,16 @@
             flex: 1;
             margin: 0 8px 5px 8px;
         }
+
+        /* Impede zoom de duplo toque no gatilho secreto do celular */
+        #secretAdminTrigger {
+            touch-action: manipulation;
+            -webkit-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            padding: 8px 4px;
+            display: inline-block;
+        }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
@@ -772,24 +782,46 @@ NOTIFY pgrst, 'reload schema';</textarea>
                         updated_at: new Date().toISOString()
                     });
             } catch (err) {
-                console.warn('Falha na sincronização rápida:', err);
+                console.warn('Erro na sincronização automática:', err);
             }
         }
 
-        // Atalho secreto 1: 5 cliques/toques rápidos no rodapé ("Preparado na Brasa • Qualidade Artesanal")
+        // Atalho secreto 1: 5 cliques/toques rápidos OU segurar por 1,5s no rodapé ("Preparado na Brasa • Qualidade Artesanal")
         let secretTapCount = 0;
         let secretTapTimer = null;
-        document.getElementById('secretAdminTrigger').addEventListener('click', () => {
+        let secretHoldTimer = null;
+        const secretTriggerEl = document.getElementById('secretAdminTrigger');
+
+        secretTriggerEl.addEventListener('click', (e) => {
+            e.preventDefault();
             secretTapCount++;
             clearTimeout(secretTapTimer);
             if (secretTapCount >= 5) {
                 secretTapCount = 0;
                 revealAdminToolbar();
             } else {
-                secretTapTimer = setTimeout(() => {
-                    secretTapCount = 0;
-                }, 1500);
+                secretTapTimer = setTimeout(() => { secretTapCount = 0; }, 1800);
             }
+        });
+
+        secretTriggerEl.addEventListener('touchstart', (e) => {
+            secretHoldTimer = setTimeout(() => {
+                secretTapCount = 0;
+                revealAdminToolbar();
+            }, 1200);
+        }, { passive: true });
+
+        secretTriggerEl.addEventListener('touchend', (e) => {
+            clearTimeout(secretHoldTimer);
+            // Evita o zoom nativo de duplo toque no iOS/Safari
+            if (e.cancelable) e.preventDefault();
+            secretTriggerEl.click();
+        }, { passive: false });
+
+        ['touchmove', 'touchcancel'].forEach(evt => {
+            secretTriggerEl.addEventListener(evt, () => {
+                clearTimeout(secretHoldTimer);
+            }, { passive: true });
         });
 
         // Atalho secreto 2: Teclado Ctrl + Shift + A (ou Cmd + Shift + A)
