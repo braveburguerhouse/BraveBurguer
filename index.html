@@ -66,28 +66,28 @@
                 linear-gradient(180deg, #0D0B0A 0%, #090807 50%, #110C0A 100%);
             position: relative;
         }
-                    }
-                }
-            }
-        };
-    </script>
-
-    <style>
-        body {
-            background-color: #050505;
-            color: #F4EDE4;
-            font-family: 'Plus Jakarta Sans', sans-serif;
-        }
-
-        /* Proporção exata 4:5 para Instagram e WhatsApp */
+        /* Proporção fluida no celular para nunca cortar os itens */
         .menu-canvas {
-            aspect-ratio: 4 / 5;
+            min-height: auto;
             background: 
                 radial-gradient(circle at 50% 0%, rgba(158, 42, 28, 0.28) 0%, rgba(10, 9, 8, 0) 55%),
                 radial-gradient(circle at 50% 100%, rgba(217, 75, 38, 0.22) 0%, rgba(10, 9, 8, 0) 50%),
                 linear-gradient(180deg, #0D0B0A 0%, #090807 50%, #110C0A 100%);
             position: relative;
-            overflow: hidden;
+        }
+
+        /* No desktop ou durante exportação HD mantém proporção 4:5 */
+        @media (min-width: 640px) {
+            .menu-canvas {
+                min-aspect-ratio: 4 / 5;
+            }
+        }
+
+        .menu-canvas.exporting-hd {
+            aspect-ratio: 4 / 5 !important;
+            width: 540px !important;
+            max-width: 540px !important;
+            overflow: hidden !important;
         }
 
         /* Textura sutil de carvão/grelha no fundo */
@@ -1154,6 +1154,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
             try {
                 btn.disabled = true;
                 btn.innerHTML = 'Gerando Alta Resolução...';
+                poster.classList.add('exporting-hd');
 
                 const canvas = await html2canvas(poster, {
                     scale: 3,
@@ -1173,6 +1174,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 console.error('Erro ao exportar imagem:', error);
                 showToast('Não foi possível exportar automaticamente.');
             } finally {
+                poster.classList.remove('exporting-hd');
                 btn.disabled = false;
                 btn.innerHTML = originalHTML;
             }
