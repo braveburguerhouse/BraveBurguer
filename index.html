@@ -57,15 +57,6 @@
             font-family: 'Plus Jakarta Sans', sans-serif;
         }
 
-        /* Proporção 4:5 com expansão segura caso haja muitos itens */
-        .menu-canvas {
-            min-aspect-ratio: 4 / 5;
-            background: 
-                radial-gradient(circle at 50% 0%, rgba(158, 42, 28, 0.28) 0%, rgba(10, 9, 8, 0) 55%),
-                radial-gradient(circle at 50% 100%, rgba(217, 75, 38, 0.22) 0%, rgba(10, 9, 8, 0) 50%),
-                linear-gradient(180deg, #0D0B0A 0%, #090807 50%, #110C0A 100%);
-            position: relative;
-        }
         /* Proporção fluida no celular para nunca cortar os itens */
         .menu-canvas {
             min-height: auto;
@@ -101,11 +92,6 @@
             );
         }
 
-        /* Brilho de brasa sutil */
-        .ember-glow {
-            box-shadow: 0 0 25px rgba(217, 75, 38, 0.18), inset 0 0 15px rgba(212, 154, 74, 0.08);
-        }
-
         /* Destaque Especial da Casa */
         .supreme-card {
             background: linear-gradient(135deg, rgba(212, 154, 74, 0.16) 0%, rgba(20, 18, 16, 0.95) 45%, rgba(158, 42, 28, 0.2) 100%);
@@ -138,14 +124,15 @@
         }
 
         /* Esconde controles da sacola apenas quando for exportar a arte limpa em HD */
-        .menu-canvas.exporting-hd .cart-item-controls {
+        .menu-canvas.exporting-hd .cart-item-controls,
+        .menu-canvas.exporting-hd #storeClosedBanner {
             display: none !important;
         }
     </style>
 </head>
 <body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 pb-24">
 
-    <!-- Barra de Ações Superior (Oculta por padrão para clientes; visível apenas com ?admin=1 ou duplo clique na logo) -->
+    <!-- Barra de Ações Superior (Oculta por padrão para clientes; visível apenas com ?admin=1 ou gatilho secreto) -->
     <div id="adminToolbar" class="hidden w-full max-w-[540px] mb-4 flex flex-wrap items-center justify-between gap-2 bg-[#141210] border border-brave-gold/30 rounded-xl p-3 shadow-lg">
         <div class="flex items-center gap-2">
             <span id="syncIndicator" class="w-2.5 h-2.5 rounded-full bg-brave-gold animate-pulse"></span>
@@ -199,7 +186,6 @@
         <!-- CABEÇALHO / IDENTIDADE VISUAL -->
         <header class="relative z-10 flex flex-col items-center text-center pt-1 pb-2">
             <div class="flex items-center justify-center gap-3 w-full">
-                <!-- Logo enviada pelo usuário com recorte e integração perfeita -->
                 <div onclick="triggerSingleUpload('img-logo')" class="photo-slot w-16 h-16 sm:w-20 sm:h-20 rounded-full overflow-hidden border border-brave-gold/40 bg-black shadow-[0_0_20px_rgba(217,75,38,0.35)] flex-shrink-0 flex items-center justify-center relative group">
                     <img id="img-logo" crossorigin="anonymous" src="https://placehold.co/300x300/141210/D49A4A?text=LOGO" alt="Logo Brave Burger House" class="w-full h-full object-cover scale-110" onerror="window.handleImgError && window.handleImgError(this, 'LOGO')">
                 </div>
@@ -217,6 +203,12 @@
                 </div>
             </div>
 
+            <!-- Aviso de Loja Fechada (visível automaticamente quando o Admin fechar a loja) -->
+            <div id="storeClosedBanner" class="hidden w-full mt-2.5 bg-red-950/90 border border-red-500/70 text-red-200 rounded-xl px-3 py-2 text-center shadow-lg">
+                <span class="font-display text-xs sm:text-sm font-bold uppercase tracking-wider text-red-400">🔒 Loja Fechada no Momento</span>
+                <p class="text-[11px] text-red-200/90 mt-0.5">Não estamos aceitando pedidos online agora. Volte em breve!</p>
+            </div>
+
             <!-- Navegação das 3 Páginas (Lanches • Bebidas • Porções) -->
             <nav class="w-full flex items-center justify-center gap-1.5 mt-2.5 px-1">
                 <button type="button" id="tab-btn-lanches" onclick="switchMenuPage('lanches')" class="page-tab-btn flex-1 py-1.5 px-2 rounded-lg font-display text-[11px] sm:text-xs tracking-[0.2em] uppercase font-bold transition-all cursor-pointer bg-gradient-to-r from-brave-ember to-brave-fire text-white border border-brave-gold/60 shadow">
@@ -231,7 +223,7 @@
             </nav>
         </header>
 
-        <!-- PÁGINA 1: LISTA DOS 5 HAMBÚRGUERES (ORDEM CRESCENTE DE PREÇO) -->
+        <!-- PÁGINA 1: LISTA DOS HAMBÚRGUERES -->
         <section id="page-lanches" class="menu-page relative z-10 flex-1 flex flex-col justify-start gap-2.5 my-1">
             <!-- Itens renderizados dinamicamente -->
         </section>
@@ -273,7 +265,7 @@
         </button>
     </div>
 
-    <!-- Modal da Sacola & Checkout (Entrega / Retirada + Pagamento Pix/Cartão/Dinheiro + Envio WhatsApp) -->
+    <!-- Modal da Sacola & Checkout (Entrega / Retirada + Taxa de Entrega + Pagamento Pix/Cartão/Dinheiro + Envio WhatsApp) -->
     <div id="checkoutModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
         <div class="bg-[#141210] border border-brave-gold/50 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl">
             <div class="flex items-center justify-between border-b border-brave-gold/20 p-4">
@@ -331,7 +323,7 @@
                     </div>
 
                     <div id="pickupInfoBox" class="hidden bg-brave-charcoal/80 border border-brave-gold/25 rounded-lg p-2.5 text-[11px] text-brave-cream">
-                        Você escolheu <strong>Retirar no Local</strong>. Assim que enviar o pedido no WhatsApp, confirmaremos o tempo de preparo!
+                        Você escolheu <strong>Retirar no Local</strong> (sem taxa de entrega). Assim que enviar o pedido no WhatsApp, confirmaremos o tempo de preparo!
                     </div>
                 </div>
 
@@ -385,11 +377,21 @@
                 </div>
             </div>
 
-            <!-- Rodapé do Modal Checkout -->
-            <div class="p-4 border-t border-brave-gold/20 bg-[#0F0D0B] rounded-b-2xl space-y-2.5">
-                <div class="flex items-center justify-between">
-                    <span class="text-xs text-brave-muted uppercase tracking-wider">Total do Pedido:</span>
-                    <span id="checkoutModalTotal" class="font-display text-xl font-bold text-brave-gold">R$ 0,00</span>
+            <!-- Rodapé do Modal Checkout com Subtotal, Taxa de Entrega e Total -->
+            <div class="p-4 border-t border-brave-gold/20 bg-[#0F0D0B] rounded-b-2xl space-y-2">
+                <div class="space-y-1 text-xs">
+                    <div class="flex items-center justify-between text-brave-muted">
+                        <span>Subtotal dos itens:</span>
+                        <span id="checkoutModalSubtotal">R$ 0,00</span>
+                    </div>
+                    <div id="checkoutDeliveryFeeRow" class="flex items-center justify-between text-brave-cream">
+                        <span>Taxa de entrega:</span>
+                        <span id="checkoutModalDeliveryFee" class="text-brave-gold font-semibold">R$ 5,00</span>
+                    </div>
+                    <div class="flex items-center justify-between pt-1 border-t border-brave-gold/15">
+                        <span class="text-brave-cream font-bold uppercase tracking-wider">Total do Pedido:</span>
+                        <span id="checkoutModalTotal" class="font-display text-xl font-bold text-brave-gold">R$ 0,00</span>
+                    </div>
                 </div>
                 <button type="button" onclick="sendOrderToWhatsApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-display font-bold uppercase tracking-wider text-sm py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
                     <span>📲 Realizar Pedido no WhatsApp</span>
@@ -433,6 +435,24 @@
             </div>
 
             <div class="p-4 sm:p-5 overflow-y-auto space-y-4 text-xs">
+                <!-- Funcionamento (Loja Aberta/Fechada) & Taxa de Entrega -->
+                <div class="bg-black/50 p-3.5 rounded-xl border border-brave-gold/35 space-y-2.5">
+                    <span class="block font-display text-sm font-bold text-brave-gold uppercase tracking-wider">Funcionamento & Taxa de Entrega</span>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-[10px] text-brave-muted uppercase mb-1">Status da Loja</label>
+                            <select id="edit-store-open" onchange="toggleStoreOpenStatus(this.value === 'true')" class="w-full bg-black/80 border border-brave-gold/40 rounded px-2.5 py-2 text-white font-semibold">
+                                <option value="true">● Loja Aberta (Recebendo Pedidos)</option>
+                                <option value="false">✕ Loja Fechada (Pedidos Bloqueados)</option>
+                            </select>
+                        </div>
+                        <div>
+                            <label class="block text-[10px] text-brave-muted uppercase mb-1">Taxa de Entrega (R$)</label>
+                            <input id="edit-delivery-fee" type="text" placeholder="5,00" oninput="updateDeliveryFeeLocal(this.value)" class="w-full bg-black/80 border border-brave-gold/40 rounded px-2.5 py-2 text-brave-gold font-bold">
+                        </div>
+                    </div>
+                </div>
+
                 <!-- Identidade / Cabeçalho e Rodapé -->
                 <div class="bg-black/50 p-3.5 rounded-xl border border-brave-gold/25 space-y-2.5">
                     <div class="flex items-center justify-between">
@@ -596,6 +616,161 @@ NOTIFY pgrst, 'reload schema';</textarea>
         let selectedDeliveryType = 'entrega';
         let selectedPaymentMethod = 'Pix';
 
+        // Estado padrão inicial do cardápio (sincronizado na nuvem via chave 'menu_data_v2')
+        const DEFAULT_MENU_STATE = {
+            settings: {
+                isOpen: true,
+                deliveryFee: '5,00'
+            },
+            header: {
+                kicker: 'Artisanal Grill',
+                title: 'BRAVE BURGER HOUSE',
+                subtitle: '180g na Brasa • Autenticidade Americana',
+                footerLeft: 'Brave Burger House',
+                footerRight: 'Preparado na Brasa • Qualidade Artesanal'
+            },
+            items: {
+                lanches: [
+                    {
+                        id: 'royal',
+                        name: 'Royal Chicken',
+                        price: 'R$ 28,00',
+                        desc: 'Pão brioche, hambúrguer artesanal de frango empanado de 180g, maionese da casa, alface e tomate.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=ROYAL'
+                    },
+                    {
+                        id: 'classic',
+                        name: 'Classic Prime',
+                        price: 'R$ 32,00',
+                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, maionese da casa, alface e tomate.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=PRIME'
+                    },
+                    {
+                        id: 'boss',
+                        name: 'The Boss',
+                        price: 'R$ 35,00',
+                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, cheddar e bacon.',
+                        badge: '★ Especial da Casa',
+                        style: 'gold',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=BOSS'
+                    },
+                    {
+                        id: 'catupiry',
+                        name: 'Catupiry Supreme',
+                        price: 'R$ 37,00',
+                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, mussarela, Catupiry Original e bacon.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CATUPIRY'
+                    },
+                    {
+                        id: 'bigboss',
+                        name: 'Big Boss',
+                        price: 'R$ 45,00',
+                        desc: 'Pão brioche, dois hambúrgueres artesanais de 180g preparados na brasa, cheddar e bacon.',
+                        badge: 'Duplo • 360g de Carne',
+                        style: 'fire',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=BIG+BOSS'
+                    }
+                ],
+                bebidas: [
+                    {
+                        id: 'bebida-1',
+                        name: 'Refrigerante Lata 350ml',
+                        price: 'R$ 7,00',
+                        desc: 'Coca-Cola, Coca-Cola Zero, Guaraná Antarctica ou Sprite gelados.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=REFRI'
+                    },
+                    {
+                        id: 'bebida-2',
+                        name: 'Suco Natural 400ml',
+                        price: 'R$ 10,00',
+                        desc: 'Laranja, limão suíço ou maracujá preparado na hora.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=SUCO'
+                    },
+                    {
+                        id: 'bebida-3',
+                        name: 'Cerveja Long Neck',
+                        price: 'R$ 12,00',
+                        desc: 'Heineken, Budweiser ou Corona extra gelada.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=LONG+NECK'
+                    },
+                    {
+                        id: 'bebida-4',
+                        name: 'Milkshake Artesanal',
+                        price: 'R$ 22,00',
+                        desc: 'Sorvete cremoso batido com calda artesanal de chocolate belga, morango ou Ovomaltine.',
+                        badge: '★ Especial da Casa',
+                        style: 'gold',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=SHAKE'
+                    }
+                ],
+                porcoes: [
+                    {
+                        id: 'porcao-1',
+                        name: 'Fritas Rústicas Brave',
+                        price: 'R$ 22,00',
+                        desc: 'Batatas rústicas crocantes temperadas com páprica defumada, alecrim e maionese da casa.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=FRITAS'
+                    },
+                    {
+                        id: 'porcao-2',
+                        name: 'Onion Rings Crocantes',
+                        price: 'R$ 26,00',
+                        desc: 'Anéis de cebola empanados dourados e sequinhos acompanhados de molho barbecue artesanal.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=ONION'
+                    },
+                    {
+                        id: 'porcao-3',
+                        name: 'Fritas Cheddar & Bacon',
+                        price: 'R$ 34,00',
+                        desc: 'Porção generosa de batatas crocantes cobertas com cheddar cremoso derretido e cubos de bacon.',
+                        badge: '★ Mais Pedida',
+                        style: 'fire',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CHEDDAR+BACON'
+                    },
+                    {
+                        id: 'porcao-4',
+                        name: 'Crispy Chicken Strips',
+                        price: 'R$ 36,00',
+                        desc: 'Tiras de peito de frango empanadas super crocantes com molho especial da casa.',
+                        badge: '',
+                        style: 'default',
+                        soldOut: false,
+                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CHICKEN'
+                    }
+                ]
+            }
+        };
+
+        let menuState = JSON.parse(JSON.stringify(DEFAULT_MENU_STATE));
+
         function parsePriceBR(priceStr) {
             const clean = String(priceStr || '0')
                 .replace(/[^\d,.-]/g, '')
@@ -609,6 +784,19 @@ NOTIFY pgrst, 'reload schema';</textarea>
             return 'R$ ' + Number(num || 0).toFixed(2).replace('.', ',');
         }
 
+        function getConfiguredDeliveryFee() {
+            const raw = (menuState.settings && menuState.settings.deliveryFee != null)
+                ? menuState.settings.deliveryFee
+                : '5,00';
+            const val = parsePriceBR(String(raw));
+            return val >= 0 ? val : 5;
+        }
+
+        function isStoreOpen() {
+            if (!menuState.settings || menuState.settings.isOpen === undefined) return true;
+            return Boolean(menuState.settings.isOpen);
+        }
+
         function findItemById(itemId) {
             for (const cat of ['lanches', 'bebidas', 'porcoes']) {
                 const found = (menuState.items[cat] || []).find(i => i.id === itemId);
@@ -618,6 +806,10 @@ NOTIFY pgrst, 'reload schema';</textarea>
         }
 
         function addToCart(itemId) {
+            if (!isStoreOpen()) {
+                showToast('A loja está fechada no momento.');
+                return;
+            }
             const item = findItemById(itemId);
             if (!item || item.soldOut) return;
             cart[itemId] = (cart[itemId] || 0) + 1;
@@ -649,25 +841,36 @@ NOTIFY pgrst, 'reload schema';</textarea>
 
         function getCartTotals() {
             let totalQty = 0;
-            let totalAmount = 0;
+            let subtotalAmount = 0;
             Object.keys(cart).forEach(id => {
                 const item = findItemById(id);
                 const qty = cart[id] || 0;
                 if (item && !item.soldOut && qty > 0) {
                     totalQty += qty;
-                    totalAmount += parsePriceBR(item.price) * qty;
+                    subtotalAmount += parsePriceBR(item.price) * qty;
                 }
             });
-            return { totalQty, totalAmount };
+            const deliveryFee = (selectedDeliveryType === 'entrega' && totalQty > 0) ? getConfiguredDeliveryFee() : 0;
+            const totalAmount = subtotalAmount + deliveryFee;
+            return { totalQty, subtotalAmount, deliveryFee, totalAmount };
         }
 
         function updateCartUI() {
             const bar = document.getElementById('floatingCartBar');
             const qtyEl = document.getElementById('cartTotalQty');
             const valEl = document.getElementById('cartTotalValue');
+            const modalSubEl = document.getElementById('checkoutModalSubtotal');
+            const modalFeeEl = document.getElementById('checkoutModalDeliveryFee');
+            const modalFeeRow = document.getElementById('checkoutDeliveryFeeRow');
             const modalTotalEl = document.getElementById('checkoutModalTotal');
 
-            const { totalQty, totalAmount } = getCartTotals();
+            const { totalQty, subtotalAmount, deliveryFee, totalAmount } = getCartTotals();
+
+            if (!isStoreOpen()) {
+                bar.classList.add('hidden');
+                closeCheckoutModal();
+                return;
+            }
 
             if (totalQty > 0) {
                 bar.classList.remove('hidden');
@@ -677,12 +880,22 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 bar.classList.add('hidden');
             }
 
-            if (modalTotalEl) {
-                modalTotalEl.textContent = formatPriceBR(totalAmount);
+            if (modalSubEl) modalSubEl.textContent = formatPriceBR(subtotalAmount);
+            if (modalFeeRow && modalFeeEl) {
+                if (selectedDeliveryType === 'entrega') {
+                    modalFeeRow.classList.remove('hidden');
+                    modalFeeEl.textContent = deliveryFee > 0 ? formatPriceBR(deliveryFee) : 'Grátis';
+                } else {
+                    modalFeeRow.classList.add('hidden');
+                }
             }
+            if (modalTotalEl) modalTotalEl.textContent = formatPriceBR(totalAmount);
         }
 
         function renderCartButtonHTML(item) {
+            if (!isStoreOpen()) {
+                return '';
+            }
             if (item.soldOut) {
                 return `<div class="cart-item-controls mt-2 flex justify-end">
                     <span class="text-[10px] uppercase tracking-wider text-red-400/80 font-semibold">Indisponível</span>
@@ -708,6 +921,10 @@ NOTIFY pgrst, 'reload schema';</textarea>
         }
 
         function openCheckoutModal() {
+            if (!isStoreOpen()) {
+                showToast('A loja está fechada no momento.');
+                return;
+            }
             const { totalQty } = getCartTotals();
             if (totalQty === 0) {
                 showToast('Adicione pelo menos 1 item na sacola.');
@@ -769,6 +986,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                 addrBox.classList.add('hidden');
                 pickupBox.classList.remove('hidden');
             }
+            updateCartUI();
         }
 
         function setPaymentMethod(method) {
@@ -804,7 +1022,12 @@ NOTIFY pgrst, 'reload schema';</textarea>
         }
 
         function sendOrderToWhatsApp() {
-            const { totalQty, totalAmount } = getCartTotals();
+            if (!isStoreOpen()) {
+                showToast('A loja está fechada no momento e não está aceitando pedidos.');
+                return;
+            }
+
+            const { totalQty, subtotalAmount, deliveryFee, totalAmount } = getCartTotals();
             if (totalQty === 0) {
                 showToast('Sua sacola está vazia.');
                 return;
@@ -818,6 +1041,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
             }
 
             let deliveryLine = '';
+            let totalsBlock = '';
             if (selectedDeliveryType === 'entrega') {
                 const street = document.getElementById('orderStreet').value.trim();
                 const neighborhood = document.getElementById('orderNeighborhood').value.trim();
@@ -827,8 +1051,10 @@ NOTIFY pgrst, 'reload schema';</textarea>
                     return;
                 }
                 deliveryLine = `🛵 *ENTREGA (DELIVERY)*\n📍 Endereço: ${street} — Bairro: ${neighborhood}${reference ? `\n📌 Ref./Compl.: ${reference}` : ''}`;
+                totalsBlock = `🧾 *Subtotal:* ${formatPriceBR(subtotalAmount)}\n🛵 *Taxa de Entrega:* ${deliveryFee > 0 ? formatPriceBR(deliveryFee) : 'Grátis'}\n💰 *Total Final:* *${formatPriceBR(totalAmount)}*`;
             } else {
                 deliveryLine = `🏪 *RETIRAR NO LOCAL*`;
+                totalsBlock = `💰 *Total:* *${formatPriceBR(totalAmount)}*`;
             }
 
             const itemLines = Object.keys(cart)
@@ -862,7 +1088,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
 🍔 *ITENS DO PEDIDO:*
 ${itemLines}
 
-💰 *Total:* *${formatPriceBR(totalAmount)}*
+${totalsBlock}
 
 ${deliveryLine}
 
@@ -871,144 +1097,6 @@ ${paymentBlock}${notesBlock}`;
             const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
             window.open(url, '_blank');
         }
-
-        // Estado padrão inicial do cardápio (sincronizado na nuvem via chave 'menu_data_v2')
-        const DEFAULT_MENU_STATE = {
-            header: {
-                kicker: 'Artisanal Grill',
-                title: 'BRAVE BURGER HOUSE',
-                subtitle: '180g na Brasa • Autenticidade Americana',
-                footerLeft: 'Brave Burger House',
-                footerRight: 'Preparado na Brasa • Qualidade Artesanal'
-            },
-            items: {
-                lanches: [
-                    {
-                        id: 'royal',
-                        name: 'Royal Chicken',
-                        price: 'R$ 28,00',
-                        desc: 'Pão brioche, hambúrguer artesanal de frango empanado de 180g, maionese da casa, alface e tomate.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=ROYAL'
-                    },
-                    {
-                        id: 'classic',
-                        name: 'Classic Prime',
-                        price: 'R$ 32,00',
-                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, maionese da casa, alface e tomate.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=PRIME'
-                    },
-                    {
-                        id: 'boss',
-                        name: 'The Boss',
-                        price: 'R$ 35,00',
-                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, cheddar e bacon.',
-                        badge: '★ Especial da Casa',
-                        style: 'gold',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=BOSS'
-                    },
-                    {
-                        id: 'catupiry',
-                        name: 'Catupiry Supreme',
-                        price: 'R$ 37,00',
-                        desc: 'Pão brioche, hambúrguer artesanal de 180g preparado na brasa, mussarela, Catupiry Original e bacon.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CATUPIRY'
-                    },
-                    {
-                        id: 'bigboss',
-                        name: 'Big Boss',
-                        price: 'R$ 45,00',
-                        desc: 'Pão brioche, dois hambúrgueres artesanais de 180g preparados na brasa, cheddar e bacon.',
-                        badge: 'Duplo • 360g de Carne',
-                        style: 'fire',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=BIG+BOSS'
-                    }
-                ],
-                bebidas: [
-                    {
-                        id: 'bebida-1',
-                        name: 'Refrigerante Lata 350ml',
-                        price: 'R$ 7,00',
-                        desc: 'Coca-Cola, Coca-Cola Zero, Guaraná Antarctica ou Sprite gelados.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=REFRI'
-                    },
-                    {
-                        id: 'bebida-2',
-                        name: 'Suco Natural 400ml',
-                        price: 'R$ 10,00',
-                        desc: 'Laranja, limão suíço ou maracujá preparado na hora.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=SUCO'
-                    },
-                    {
-                        id: 'bebida-3',
-                        name: 'Cerveja Long Neck',
-                        price: 'R$ 12,00',
-                        desc: 'Heineken, Budweiser ou Corona extra gelada.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=LONG+NECK'
-                    },
-                    {
-                        id: 'bebida-4',
-                        name: 'Milkshake Artesanal',
-                        price: 'R$ 22,00',
-                        desc: 'Sorvete cremoso batido com calda artesanal de chocolate belga, morango ou Ovomaltine.',
-                        badge: '★ Especial da Casa',
-                        style: 'gold',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=SHAKE'
-                    }
-                ],
-                porcoes: [
-                    {
-                        id: 'porcao-1',
-                        name: 'Fritas Rústicas Brave',
-                        price: 'R$ 22,00',
-                        desc: 'Batatas rústicas crocantes temperadas com páprica defumada, alecrim e maionese da casa.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=FRITAS'
-                    },
-                    {
-                        id: 'porcao-2',
-                        name: 'Onion Rings Crocantes',
-                        price: 'R$ 26,00',
-                        desc: 'Anéis de cebola empanados dourados e sequinhos acompanhados de molho barbecue artesanal.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=ONION'
-                    },
-                    {
-                        id: 'porcao-3',
-                        name: 'Fritas Cheddar & Bacon',
-                        price: 'R$ 34,00',
-                        desc: 'Porção generosa de batatas crocantes cobertas com cheddar cremoso derretido e cubos de bacon.',
-                        badge: '★ Mais Pedida',
-                        style: 'fire',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CHEDDAR+BACON'
-                    },
-                    {
-                        id: 'porcao-4',
-                        name: 'Crispy Chicken Strips',
-                        price: 'R$ 36,00',
-                        desc: 'Tiras de peito de frango empanadas super crocantes com molho especial da casa.',
-                        badge: '',
-                        style: 'default',
-                        img: 'https://placehold.co/300x300/141210/D49A4A?text=CHICKEN'
-                    }
-                ]
-            }
-        };
-
-        let menuState = JSON.parse(JSON.stringify(DEFAULT_MENU_STATE));
 
         function escapeHtml(str) {
             return String(str || '')
@@ -1032,6 +1120,16 @@ ${paymentBlock}${notesBlock}`;
             document.getElementById('header-subtitle').textContent = menuState.header.subtitle;
             document.getElementById('footer-left').textContent = menuState.header.footerLeft;
             document.getElementById('secretAdminTrigger').textContent = menuState.header.footerRight;
+
+            // Atualiza banner de Loja Aberta / Fechada
+            const closedBanner = document.getElementById('storeClosedBanner');
+            if (closedBanner) {
+                if (isStoreOpen()) {
+                    closedBanner.classList.add('hidden');
+                } else {
+                    closedBanner.classList.remove('hidden');
+                }
+            }
 
             ['lanches', 'bebidas', 'porcoes'].forEach(category => {
                 const container = document.getElementById(`page-${category}`);
@@ -1116,6 +1214,21 @@ ${paymentBlock}${notesBlock}`;
                     </article>`;
                 }).join('');
             });
+            updateCartUI();
+        }
+
+        // Controles Admin de Funcionamento (Loja Aberta/Fechada) e Taxa de Entrega
+        function toggleStoreOpenStatus(openStatus) {
+            if (!menuState.settings) menuState.settings = { isOpen: true, deliveryFee: '5,00' };
+            menuState.settings.isOpen = Boolean(openStatus);
+            renderPublicMenu();
+            syncStateSilently();
+            showToast(openStatus ? 'Loja marcada como ABERTA na nuvem!' : 'Loja marcada como FECHADA na nuvem!');
+        }
+
+        function updateDeliveryFeeLocal(val) {
+            if (!menuState.settings) menuState.settings = { isOpen: true, deliveryFee: '5,00' };
+            menuState.settings.deliveryFee = val;
             updateCartUI();
         }
 
@@ -1271,7 +1384,7 @@ ${paymentBlock}${notesBlock}`;
             }
         }
 
-        // Atalho secreto 1: 5 cliques/toques rápidos OU segurar por 1,5s no rodapé ("Preparado na Brasa • Qualidade Artesanal")
+        // Atalho secreto 1: 5 cliques/toques rápidos OU segurar por 1,2s no rodapé ("Preparado na Brasa • Qualidade Artesanal")
         let secretTapCount = 0;
         let secretTapTimer = null;
         let secretHoldTimer = null;
@@ -1289,7 +1402,7 @@ ${paymentBlock}${notesBlock}`;
             }
         });
 
-        secretTriggerEl.addEventListener('touchstart', (e) => {
+        secretTriggerEl.addEventListener('touchstart', () => {
             secretHoldTimer = setTimeout(() => {
                 secretTapCount = 0;
                 revealAdminToolbar();
@@ -1298,7 +1411,6 @@ ${paymentBlock}${notesBlock}`;
 
         secretTriggerEl.addEventListener('touchend', (e) => {
             clearTimeout(secretHoldTimer);
-            // Evita o zoom nativo de duplo toque no iOS/Safari
             if (e.cancelable) e.preventDefault();
             secretTriggerEl.click();
         }, { passive: false });
@@ -1317,7 +1429,7 @@ ${paymentBlock}${notesBlock}`;
             }
         });
 
-        // 2. Atualiza visual de acordo com permissão (Cliente x Admin)
+        // Atualiza visual de acordo com permissão (Cliente x Admin)
         function updateAdminUI(loggedIn) {
             isAdminLoggedIn = loggedIn;
             const btnLabel = document.getElementById('btnAdminLabel');
@@ -1344,40 +1456,25 @@ ${paymentBlock}${notesBlock}`;
                 return;
             }
 
-            // 1. Verifica se existe o JSON completo salvo em 'menu_data_v2'
             const fullStateRow = records.find(r => r.slot_id === 'menu_data_v2');
             if (fullStateRow && fullStateRow.image_url) {
                 try {
                     const parsed = JSON.parse(fullStateRow.image_url);
                     if (parsed && parsed.header && parsed.items) {
-                        menuState = parsed;
+                        menuState = {
+                            settings: {
+                                isOpen: parsed.settings && parsed.settings.isOpen !== undefined ? parsed.settings.isOpen : true,
+                                deliveryFee: (parsed.settings && parsed.settings.deliveryFee != null) ? parsed.settings.deliveryFee : '5,00'
+                            },
+                            header: parsed.header,
+                            items: parsed.items
+                        };
                     }
                 } catch (e) {
                     console.warn('Falha ao ler JSON do cardápio:', e);
                 }
-            } else {
-                // Migração automática de registros antigos (legado)
-                records.forEach(item => {
-                    if (!item.slot_id || item.image_url == null) return;
-                    if (item.slot_id === 'txt:header-kicker') menuState.header.kicker = item.image_url;
-                    if (item.slot_id === 'txt:header-title') menuState.header.title = item.image_url;
-                    if (item.slot_id === 'txt:header-subtitle') menuState.header.subtitle = item.image_url;
-                    if (item.slot_id === 'txt:footer-left') menuState.header.footerLeft = item.image_url;
-                    if (item.slot_id === 'txt:footer-right') menuState.header.footerRight = item.image_url;
-
-                    ['lanches', 'bebidas', 'porcoes'].forEach(cat => {
-                        (menuState.items[cat] || []).forEach(entry => {
-                            if (item.slot_id === `img-${entry.id}`) entry.img = item.image_url;
-                            if (item.slot_id === `txt:name-${entry.id}`) entry.name = item.image_url;
-                            if (item.slot_id === `txt:price-${entry.id}`) entry.price = item.image_url;
-                            if (item.slot_id === `txt:desc-${entry.id}`) entry.desc = item.image_url;
-                            if (item.slot_id === `txt:badge-${entry.id}`) entry.badge = item.image_url;
-                        });
-                    });
-                });
             }
 
-            // 2. Aplica a logo se houver
             const logoRow = records.find(r => r.slot_id === 'img-logo');
             if (logoRow && logoRow.image_url) {
                 const logoImg = document.getElementById('img-logo');
@@ -1390,6 +1487,10 @@ ${paymentBlock}${notesBlock}`;
         }
 
         function populateAdminForm() {
+            const isOpenVal = isStoreOpen() ? 'true' : 'false';
+            document.getElementById('edit-store-open').value = isOpenVal;
+            document.getElementById('edit-delivery-fee').value = (menuState.settings && menuState.settings.deliveryFee != null) ? menuState.settings.deliveryFee : '5,00';
+
             document.getElementById('edit-header-kicker').value = menuState.header.kicker || '';
             document.getElementById('edit-header-title').value = menuState.header.title || '';
             document.getElementById('edit-header-subtitle').value = menuState.header.subtitle || '';
@@ -1398,7 +1499,7 @@ ${paymentBlock}${notesBlock}`;
             renderAdminItemsEditor();
         }
 
-        // 3. Busca as fotos e textos salvos no banco para todos os visitantes
+        // Busca as fotos e textos salvos no banco para todos os visitantes
         async function fetchMenuPhotos() {
             const indicator = document.getElementById('syncIndicator');
             const statusText = document.getElementById('syncStatusText');
@@ -1472,28 +1573,6 @@ ${paymentBlock}${notesBlock}`;
             }
         }
 
-        // 4. Atualização automática via HTTP polling (pausada enquanto o modal Admin estiver aberto)
-        function startAutoSync() {
-            setInterval(async () => {
-                const adminModal = document.getElementById('photoManagerModal');
-                if (adminModal && !adminModal.classList.contains('hidden')) {
-                    return;
-                }
-                try {
-                    const { data, error } = await supabaseClient
-                        .from('cardapio_fotos')
-                        .select('slot_id, image_url');
-
-                    if (!error && data && data.length > 0) {
-                        applyMenuRecords(data);
-                    }
-                } catch (_) {
-                    // Ignora falhas silenciosas de rede em segundo plano
-                }
-            }, 15000);
-        }
-
-        // 5. Controle do botão Área Admin / Editar Cardápio
         function openAdminFlow() {
             if (isAdminLoggedIn) {
                 populateAdminForm();
@@ -1512,6 +1591,10 @@ ${paymentBlock}${notesBlock}`;
             try {
                 btn.disabled = true;
                 btn.textContent = 'Salvando...';
+
+                if (!menuState.settings) menuState.settings = { isOpen: true, deliveryFee: '5,00' };
+                menuState.settings.isOpen = document.getElementById('edit-store-open').value === 'true';
+                menuState.settings.deliveryFee = document.getElementById('edit-delivery-fee').value.trim() || '5,00';
 
                 menuState.header.kicker = document.getElementById('edit-header-kicker').value.trim();
                 menuState.header.title = document.getElementById('edit-header-title').value.trim();
@@ -1574,7 +1657,6 @@ ${paymentBlock}${notesBlock}`;
             showToast('Você saiu do modo administrador.');
         }
 
-        // 6. Clique direto na foto (bloqueado se não for admin)
         function triggerSingleUpload(targetId) {
             if (!isAdminLoggedIn) return;
             currentTargetImgId = targetId;
@@ -1589,7 +1671,6 @@ ${paymentBlock}${notesBlock}`;
             }
         });
 
-        // 7. Faz upload da imagem no Storage e salva a URL pública na tabela
         async function uploadToSupabase(input, slotId) {
             if (!isAdminLoggedIn) {
                 showToast('Apenas o administrador pode alterar fotos.');
@@ -1604,14 +1685,12 @@ ${paymentBlock}${notesBlock}`;
             try {
                 showToast('Enviando foto para a nuvem...');
 
-                // Sobe arquivo no bucket 'cardapio'
                 const { error: uploadError } = await supabaseClient.storage
                     .from('cardapio')
                     .upload(filePath, file, { upsert: true });
 
                 if (uploadError) throw uploadError;
 
-                // Gera link público
                 const { data: publicUrlData } = supabaseClient.storage
                     .from('cardapio')
                     .getPublicUrl(filePath);
@@ -1653,9 +1732,9 @@ ${paymentBlock}${notesBlock}`;
                 showToast('Erro ao salvar: verifique permissões no Supabase.');
             }
         }
-        // 4. Atualização em TEMPO REAL via HTTP rápido + sincronização instantânea entre abas
+
+        // Atualização contínua via HTTP (compatível com Canvas e GitHub Pages)
         function startAutoSync() {
-            // Sincroniza imediatamente entre abas/janelas no mesmo navegador
             try {
                 const bc = new BroadcastChannel('brave_burger_sync');
                 bc.onmessage = () => {
@@ -1666,7 +1745,6 @@ ${paymentBlock}${notesBlock}`;
                 };
             } catch (_) {}
 
-            // Atualiza imediatamente ao abrir ou voltar para o cardápio no celular
             document.addEventListener('visibilitychange', () => {
                 if (document.visibilityState === 'visible') {
                     const adminModal = document.getElementById('photoManagerModal');
@@ -1676,7 +1754,6 @@ ${paymentBlock}${notesBlock}`;
                 }
             });
 
-            // Sincronização contínua via HTTP (sem WebSocket, compatível com Canvas e GitHub Pages)
             setInterval(async () => {
                 const adminModal = document.getElementById('photoManagerModal');
                 if (adminModal && !adminModal.classList.contains('hidden')) {
@@ -1690,13 +1767,11 @@ ${paymentBlock}${notesBlock}`;
                     if (!error && data && data.length > 0) {
                         applyMenuRecords(data);
                     }
-                } catch (_) {
-                    // Ignora falhas silenciosas de rede em segundo plano
-                }
-            }, 2500);
+                } catch (_) {}
+            }, 3000);
         }
 
-        // Exporta o cardápio em alta resolução (1080x1350px - Proporção 4:5)
+        // Exporta o cardápio em alta resolução (Proporção 4:5)
         async function exportMenuImage() {
             const poster = document.getElementById('menuPoster');
             const btn = document.getElementById('btnDownload');
