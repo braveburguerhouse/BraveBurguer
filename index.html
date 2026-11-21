@@ -136,9 +136,14 @@
             padding: 8px 4px;
             display: inline-block;
         }
+
+        /* Esconde controles da sacola apenas quando for exportar a arte limpa em HD */
+        .menu-canvas.exporting-hd .cart-item-controls {
+            display: none !important;
+        }
     </style>
 </head>
-<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6">
+<body class="min-h-screen flex flex-col items-center justify-center p-3 sm:p-6 pb-24">
 
     <!-- Barra de Ações Superior (Oculta por padrão para clientes; visível apenas com ?admin=1 ou duplo clique na logo) -->
     <div id="adminToolbar" class="hidden w-full max-w-[540px] mb-4 flex flex-wrap items-center justify-between gap-2 bg-[#141210] border border-brave-gold/30 rounded-xl p-3 shadow-lg">
@@ -251,6 +256,147 @@
 
     <!-- Input oculto para troca rápida de foto ao clicar diretamente na imagem no modo Admin -->
     <input type="file" id="singleFileInput" accept="image/*" class="hidden">
+
+    <!-- Barra Flutuante da Sacola (Rodapé Fixo para o Cliente) -->
+    <div id="floatingCartBar" class="hidden fixed bottom-3 left-1/2 -translate-x-1/2 w-[94%] max-w-[540px] z-40">
+        <button type="button" onclick="openCheckoutModal()" class="w-full bg-gradient-to-r from-brave-ember via-brave-fire to-brave-copper hover:brightness-110 text-white border border-brave-gold/70 rounded-2xl px-4 py-3 shadow-[0_12px_35px_rgba(217,75,38,0.45)] flex items-center justify-between transition-all cursor-pointer active:scale-[0.99]">
+            <div class="flex items-center gap-2.5">
+                <span id="cartTotalQty" class="bg-brave-black text-brave-gold font-display font-bold text-xs px-2.5 py-1 rounded-lg border border-brave-gold/50">0</span>
+                <div class="text-left">
+                    <span class="block font-display text-sm font-bold uppercase tracking-wider leading-none">Ver Sacola & Finalizar</span>
+                    <span class="block text-[10px] text-white/90 mt-0.5">Enviar pedido direto no WhatsApp</span>
+                </div>
+            </div>
+            <div class="text-right">
+                <span id="cartTotalValue" class="font-display text-base sm:text-lg font-bold text-white">R$ 0,00</span>
+            </div>
+        </button>
+    </div>
+
+    <!-- Modal da Sacola & Checkout (Entrega / Retirada + Pagamento Pix/Cartão/Dinheiro + Envio WhatsApp) -->
+    <div id="checkoutModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-3 sm:p-4">
+        <div class="bg-[#141210] border border-brave-gold/50 rounded-2xl max-w-lg w-full max-h-[92vh] flex flex-col shadow-2xl">
+            <div class="flex items-center justify-between border-b border-brave-gold/20 p-4">
+                <div>
+                    <h3 class="font-display text-lg font-bold text-brave-gold uppercase tracking-wider">Sua Sacola • Brave Burger</h3>
+                    <p class="text-[11px] text-brave-muted">Confira os itens e finalize seu pedido para o WhatsApp</p>
+                </div>
+                <button type="button" onclick="closeCheckoutModal()" class="text-brave-muted hover:text-white text-2xl leading-none cursor-pointer">&times;</button>
+            </div>
+
+            <div class="p-4 overflow-y-auto space-y-4 text-xs">
+                <!-- Lista de Itens na Sacola -->
+                <div class="space-y-2">
+                    <div class="flex items-center justify-between">
+                        <span class="font-display text-xs uppercase tracking-wider text-brave-gold font-bold">Itens Escolhidos</span>
+                        <button type="button" onclick="clearCart()" class="text-[11px] text-brave-fire hover:underline cursor-pointer">Limpar sacola</button>
+                    </div>
+                    <div id="checkoutItemsList" class="space-y-2"></div>
+                </div>
+
+                <!-- Nome do Cliente -->
+                <div class="bg-black/50 p-3 rounded-xl border border-brave-gold/25 space-y-2">
+                    <label class="block font-display text-xs uppercase tracking-wider text-brave-gold font-bold">Seu Nome *</label>
+                    <input id="orderCustomerName" type="text" placeholder="Digite seu nome completo" class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                </div>
+
+                <!-- Tipo de Entrega: Entrega ou Retirar no Balcão -->
+                <div class="bg-black/50 p-3 rounded-xl border border-brave-gold/25 space-y-2.5">
+                    <span class="block font-display text-xs uppercase tracking-wider text-brave-gold font-bold">Como deseja receber? *</span>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button type="button" id="btnDeliveryTypeEntrega" onclick="setDeliveryType('entrega')" class="py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-brave-gold text-black border-brave-gold">
+                            🛵 Entrega (Delivery)
+                        </button>
+                        <button type="button" id="btnDeliveryTypeRetirada" onclick="setDeliveryType('retirada')" class="py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30">
+                            🏪 Retirar no Local
+                        </button>
+                    </div>
+
+                    <!-- Campos de Endereço (visíveis quando Entrega estiver selecionada) -->
+                    <div id="deliveryAddressBox" class="space-y-2 pt-1">
+                        <div>
+                            <label class="block text-[10px] text-brave-muted uppercase mb-0.5">Rua e Número *</label>
+                            <input id="orderStreet" type="text" placeholder="Ex: Rua Paulista, 450" class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                        </div>
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-brave-muted uppercase mb-0.5">Bairro *</label>
+                                <input id="orderNeighborhood" type="text" placeholder="Ex: Centro" class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-brave-muted uppercase mb-0.5">Complemento / Referência</label>
+                                <input id="orderReference" type="text" placeholder="Ex: Apto 12 / Próximo à praça" class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="pickupInfoBox" class="hidden bg-brave-charcoal/80 border border-brave-gold/25 rounded-lg p-2.5 text-[11px] text-brave-cream">
+                        Você escolheu <strong>Retirar no Local</strong>. Assim que enviar o pedido no WhatsApp, confirmaremos o tempo de preparo!
+                    </div>
+                </div>
+
+                <!-- Forma de Pagamento -->
+                <div class="bg-black/50 p-3 rounded-xl border border-brave-gold/25 space-y-2.5">
+                    <span class="block font-display text-xs uppercase tracking-wider text-brave-gold font-bold">Forma de Pagamento *</span>
+                    <div class="grid grid-cols-3 gap-1.5">
+                        <button type="button" id="btnPayPix" onclick="setPaymentMethod('Pix')" class="py-2 px-2 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-brave-gold text-black border-brave-gold">
+                            💠 Pix
+                        </button>
+                        <button type="button" id="btnPayCartao" onclick="setPaymentMethod('Cartão')" class="py-2 px-2 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30">
+                            💳 Cartão
+                        </button>
+                        <button type="button" id="btnPayDinheiro" onclick="setPaymentMethod('Dinheiro')" class="py-2 px-2 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30">
+                            💵 Dinheiro
+                        </button>
+                    </div>
+
+                    <!-- Detalhes do PIX com Chave e Alerta de Comprovante -->
+                    <div id="pixDetailsBox" class="bg-gradient-to-br from-emerald-950/70 to-black border border-emerald-500/50 rounded-xl p-3 space-y-2">
+                        <div class="flex items-center justify-between gap-2">
+                            <div>
+                                <span class="block text-[10px] uppercase tracking-wider text-emerald-300 font-bold">Chave Pix (E-mail):</span>
+                                <span id="pixKeyText" class="text-xs sm:text-sm font-mono font-bold text-white select-all">jonasfilipi2004@gmail.com</span>
+                            </div>
+                            <button type="button" onclick="copyPixKey()" class="bg-emerald-500 hover:bg-emerald-400 text-black font-display font-bold uppercase tracking-wider text-[11px] px-3 py-1.5 rounded-lg shadow cursor-pointer flex-shrink-0">
+                                Copiar Chave
+                            </button>
+                        </div>
+                        <div class="bg-amber-500/15 border border-amber-400/50 rounded-lg p-2 text-[11px] text-amber-200 leading-snug">
+                            ⚠️ <strong>IMPORTANTE:</strong> Após realizar o Pix, <strong>envie o comprovante no WhatsApp</strong> logo após finalizar o pedido para confirmarmos o preparo!
+                        </div>
+                    </div>
+
+                    <!-- Detalhes Cartão -->
+                    <div id="cardDetailsBox" class="hidden bg-brave-charcoal/80 border border-brave-gold/25 rounded-lg p-2.5 text-[11px] text-brave-cream">
+                        Levamos a maquininha (Crédito ou Débito) na entrega ou você passa no balcão.
+                    </div>
+
+                    <!-- Detalhes Dinheiro (Troco) -->
+                    <div id="cashDetailsBox" class="hidden space-y-1.5">
+                        <label class="block text-[10px] text-brave-muted uppercase">Precisa de troco para quanto? (Opcional)</label>
+                        <input id="orderCashChange" type="text" placeholder="Ex: Troco para R$ 50,00 ou Não precisa" class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                    </div>
+                </div>
+
+                <!-- Observações -->
+                <div class="bg-black/50 p-3 rounded-xl border border-brave-gold/25 space-y-1.5">
+                    <label class="block font-display text-xs uppercase tracking-wider text-brave-gold font-bold">Observações (Opcional)</label>
+                    <input id="orderNotes" type="text" placeholder="Ex: Sem cebola, ponto da carne, maionese à parte..." class="w-full bg-black/80 border border-brave-gold/30 rounded-lg px-3 py-2 text-white focus:outline-none focus:border-brave-gold">
+                </div>
+            </div>
+
+            <!-- Rodapé do Modal Checkout -->
+            <div class="p-4 border-t border-brave-gold/20 bg-[#0F0D0B] rounded-b-2xl space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs text-brave-muted uppercase tracking-wider">Total do Pedido:</span>
+                    <span id="checkoutModalTotal" class="font-display text-xl font-bold text-brave-gold">R$ 0,00</span>
+                </div>
+                <button type="button" onclick="sendOrderToWhatsApp()" class="w-full bg-gradient-to-r from-emerald-600 to-emerald-500 hover:from-emerald-500 hover:to-emerald-400 text-white font-display font-bold uppercase tracking-wider text-sm py-3 rounded-xl shadow-lg flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
+                    <span>📲 Realizar Pedido no WhatsApp</span>
+                </button>
+            </div>
+        </div>
+    </div>
 
     <!-- Modal de Login do Administrador -->
     <div id="adminLoginModal" class="hidden fixed inset-0 bg-black/85 backdrop-blur-sm z-50 flex items-center justify-center p-4">
@@ -443,6 +589,289 @@ NOTIFY pgrst, 'reload schema';</textarea>
         let currentTargetImgId = null;
         let activeMenuPage = 'lanches';
 
+        // Estado da Sacola e Checkout WhatsApp
+        const WHATSAPP_NUMBER = '5516993825537';
+        const PIX_KEY = 'jonasfilipi2004@gmail.com';
+        let cart = {}; // { [itemId]: qty }
+        let selectedDeliveryType = 'entrega';
+        let selectedPaymentMethod = 'Pix';
+
+        function parsePriceBR(priceStr) {
+            const clean = String(priceStr || '0')
+                .replace(/[^\d,.-]/g, '')
+                .replace(/\./g, '')
+                .replace(',', '.');
+            const val = parseFloat(clean);
+            return isNaN(val) ? 0 : val;
+        }
+
+        function formatPriceBR(num) {
+            return 'R$ ' + Number(num || 0).toFixed(2).replace('.', ',');
+        }
+
+        function findItemById(itemId) {
+            for (const cat of ['lanches', 'bebidas', 'porcoes']) {
+                const found = (menuState.items[cat] || []).find(i => i.id === itemId);
+                if (found) return found;
+            }
+            return null;
+        }
+
+        function addToCart(itemId) {
+            const item = findItemById(itemId);
+            if (!item || item.soldOut) return;
+            cart[itemId] = (cart[itemId] || 0) + 1;
+            updateCartUI();
+            renderPublicMenu();
+            showToast(`${item.name} adicionado à sacola!`);
+        }
+
+        function changeCartQty(itemId, delta) {
+            const current = cart[itemId] || 0;
+            const next = current + delta;
+            if (next <= 0) {
+                delete cart[itemId];
+            } else {
+                cart[itemId] = next;
+            }
+            updateCartUI();
+            renderPublicMenu();
+            renderCheckoutItems();
+        }
+
+        function clearCart() {
+            cart = {};
+            updateCartUI();
+            renderPublicMenu();
+            closeCheckoutModal();
+            showToast('Sacola esvaziada.');
+        }
+
+        function getCartTotals() {
+            let totalQty = 0;
+            let totalAmount = 0;
+            Object.keys(cart).forEach(id => {
+                const item = findItemById(id);
+                const qty = cart[id] || 0;
+                if (item && !item.soldOut && qty > 0) {
+                    totalQty += qty;
+                    totalAmount += parsePriceBR(item.price) * qty;
+                }
+            });
+            return { totalQty, totalAmount };
+        }
+
+        function updateCartUI() {
+            const bar = document.getElementById('floatingCartBar');
+            const qtyEl = document.getElementById('cartTotalQty');
+            const valEl = document.getElementById('cartTotalValue');
+            const modalTotalEl = document.getElementById('checkoutModalTotal');
+
+            const { totalQty, totalAmount } = getCartTotals();
+
+            if (totalQty > 0) {
+                bar.classList.remove('hidden');
+                qtyEl.textContent = `${totalQty} ${totalQty === 1 ? 'item' : 'itens'}`;
+                valEl.textContent = formatPriceBR(totalAmount);
+            } else {
+                bar.classList.add('hidden');
+            }
+
+            if (modalTotalEl) {
+                modalTotalEl.textContent = formatPriceBR(totalAmount);
+            }
+        }
+
+        function renderCartButtonHTML(item) {
+            if (item.soldOut) {
+                return `<div class="cart-item-controls mt-2 flex justify-end">
+                    <span class="text-[10px] uppercase tracking-wider text-red-400/80 font-semibold">Indisponível</span>
+                </div>`;
+            }
+            const qty = cart[item.id] || 0;
+            if (qty > 0) {
+                return `
+                <div class="cart-item-controls mt-2 flex items-center justify-end">
+                    <div class="inline-flex items-center bg-black/90 border border-brave-gold/60 rounded-lg overflow-hidden shadow">
+                        <button type="button" onclick="changeCartQty('${item.id}', -1)" class="px-2.5 py-1 text-brave-gold hover:bg-brave-gold/20 font-bold text-xs cursor-pointer">−</button>
+                        <span class="px-2.5 py-1 text-white font-display font-bold text-xs">${qty}</span>
+                        <button type="button" onclick="changeCartQty('${item.id}', 1)" class="px-2.5 py-1 text-brave-gold hover:bg-brave-gold/20 font-bold text-xs cursor-pointer">+</button>
+                    </div>
+                </div>`;
+            }
+            return `
+            <div class="cart-item-controls mt-2 flex justify-end">
+                <button type="button" onclick="addToCart('${item.id}')" class="bg-gradient-to-r from-brave-ember to-brave-fire hover:brightness-110 text-white font-display uppercase tracking-wider text-[11px] font-bold px-3 py-1 rounded-lg border border-brave-gold/40 shadow cursor-pointer active:scale-95">
+                    + Adicionar à Sacola
+                </button>
+            </div>`;
+        }
+
+        function openCheckoutModal() {
+            const { totalQty } = getCartTotals();
+            if (totalQty === 0) {
+                showToast('Adicione pelo menos 1 item na sacola.');
+                return;
+            }
+            renderCheckoutItems();
+            updateCartUI();
+            document.getElementById('checkoutModal').classList.remove('hidden');
+        }
+
+        function closeCheckoutModal() {
+            document.getElementById('checkoutModal').classList.add('hidden');
+        }
+
+        function renderCheckoutItems() {
+            const container = document.getElementById('checkoutItemsList');
+            if (!container) return;
+            const ids = Object.keys(cart).filter(id => cart[id] > 0 && findItemById(id) && !findItemById(id).soldOut);
+
+            if (ids.length === 0) {
+                container.innerHTML = `<p class="text-brave-muted text-center py-3">Sua sacola está vazia.</p>`;
+                return;
+            }
+
+            container.innerHTML = ids.map(id => {
+                const item = findItemById(id);
+                const qty = cart[id];
+                const subtotal = parsePriceBR(item.price) * qty;
+                return `
+                <div class="flex items-center justify-between gap-2 bg-black/60 border border-brave-gold/20 rounded-xl p-2.5">
+                    <div class="min-w-0 flex-1">
+                        <p class="font-display text-sm font-bold text-brave-cream uppercase truncate">${escapeHtml(item.name)}</p>
+                        <p class="text-[11px] text-brave-gold">${escapeHtml(item.price)} un. • Subtotal: <strong>${formatPriceBR(subtotal)}</strong></p>
+                    </div>
+                    <div class="inline-flex items-center bg-brave-charcoal border border-brave-gold/40 rounded-lg overflow-hidden">
+                        <button type="button" onclick="changeCartQty('${id}', -1)" class="px-2.5 py-1 text-brave-gold hover:bg-brave-gold/20 font-bold cursor-pointer">−</button>
+                        <span class="px-2.5 py-1 text-white font-display font-bold">${qty}</span>
+                        <button type="button" onclick="changeCartQty('${id}', 1)" class="px-2.5 py-1 text-brave-gold hover:bg-brave-gold/20 font-bold cursor-pointer">+</button>
+                    </div>
+                </div>`;
+            }).join('');
+        }
+
+        function setDeliveryType(type) {
+            selectedDeliveryType = type;
+            const btnEntrega = document.getElementById('btnDeliveryTypeEntrega');
+            const btnRetirada = document.getElementById('btnDeliveryTypeRetirada');
+            const addrBox = document.getElementById('deliveryAddressBox');
+            const pickupBox = document.getElementById('pickupInfoBox');
+
+            if (type === 'entrega') {
+                btnEntrega.className = 'py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-brave-gold text-black border-brave-gold';
+                btnRetirada.className = 'py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30';
+                addrBox.classList.remove('hidden');
+                pickupBox.classList.add('hidden');
+            } else {
+                btnRetirada.className = 'py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-brave-gold text-black border-brave-gold';
+                btnEntrega.className = 'py-2 px-3 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30';
+                addrBox.classList.add('hidden');
+                pickupBox.classList.remove('hidden');
+            }
+        }
+
+        function setPaymentMethod(method) {
+            selectedPaymentMethod = method;
+            const map = {
+                'Pix': 'btnPayPix',
+                'Cartão': 'btnPayCartao',
+                'Dinheiro': 'btnPayDinheiro'
+            };
+            Object.keys(map).forEach(key => {
+                const btn = document.getElementById(map[key]);
+                if (!btn) return;
+                if (key === method) {
+                    btn.className = 'py-2 px-2 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-brave-gold text-black border-brave-gold';
+                } else {
+                    btn.className = 'py-2 px-2 rounded-lg font-display uppercase tracking-wider text-xs font-bold border transition-all cursor-pointer bg-black/70 text-brave-muted border-brave-gold/30';
+                }
+            });
+
+            document.getElementById('pixDetailsBox').classList.toggle('hidden', method !== 'Pix');
+            document.getElementById('cardDetailsBox').classList.toggle('hidden', method !== 'Cartão');
+            document.getElementById('cashDetailsBox').classList.toggle('hidden', method !== 'Dinheiro');
+        }
+
+        function copyPixKey() {
+            const temp = document.createElement('textarea');
+            temp.value = PIX_KEY;
+            document.body.appendChild(temp);
+            temp.select();
+            document.execCommand('copy');
+            document.body.removeChild(temp);
+            showToast('Chave Pix copiada! Lembre-se de enviar o comprovante.');
+        }
+
+        function sendOrderToWhatsApp() {
+            const { totalQty, totalAmount } = getCartTotals();
+            if (totalQty === 0) {
+                showToast('Sua sacola está vazia.');
+                return;
+            }
+
+            const customerName = document.getElementById('orderCustomerName').value.trim();
+            if (!customerName) {
+                showToast('Por favor, informe o seu nome.');
+                document.getElementById('orderCustomerName').focus();
+                return;
+            }
+
+            let deliveryLine = '';
+            if (selectedDeliveryType === 'entrega') {
+                const street = document.getElementById('orderStreet').value.trim();
+                const neighborhood = document.getElementById('orderNeighborhood').value.trim();
+                const reference = document.getElementById('orderReference').value.trim();
+                if (!street || !neighborhood) {
+                    showToast('Informe a rua/número e o bairro para entrega.');
+                    return;
+                }
+                deliveryLine = `🛵 *ENTREGA (DELIVERY)*\n📍 Endereço: ${street} — Bairro: ${neighborhood}${reference ? `\n📌 Ref./Compl.: ${reference}` : ''}`;
+            } else {
+                deliveryLine = `🏪 *RETIRAR NO LOCAL*`;
+            }
+
+            const itemLines = Object.keys(cart)
+                .filter(id => cart[id] > 0 && findItemById(id) && !findItemById(id).soldOut)
+                .map(id => {
+                    const item = findItemById(id);
+                    const qty = cart[id];
+                    const sub = formatPriceBR(parsePriceBR(item.price) * qty);
+                    return `• ${qty}x *${item.name}* (${sub})`;
+                })
+                .join('\n');
+
+            let paymentBlock = `💳 *Pagamento:* ${selectedPaymentMethod}`;
+            if (selectedPaymentMethod === 'Pix') {
+                paymentBlock += `\n🔑 *Chave Pix:* ${PIX_KEY}\n⚠️ _Vou enviar o comprovante do Pix logo abaixo para confirmar o pedido!_`;
+            } else if (selectedPaymentMethod === 'Dinheiro') {
+                const cashChange = document.getElementById('orderCashChange').value.trim();
+                if (cashChange) {
+                    paymentBlock += `\n💵 *Troco:* ${cashChange}`;
+                }
+            }
+
+            const notes = document.getElementById('orderNotes').value.trim();
+            const notesBlock = notes ? `\n📝 *Observações:* ${notes}` : '';
+
+            const message =
+`🔥 *NOVO PEDIDO — BRAVE BURGER HOUSE* 🔥
+
+👤 *Cliente:* ${customerName}
+
+🍔 *ITENS DO PEDIDO:*
+${itemLines}
+
+💰 *Total:* *${formatPriceBR(totalAmount)}*
+
+${deliveryLine}
+
+${paymentBlock}${notesBlock}`;
+
+            const url = `https://wa.me/${WHATSAPP_NUMBER}?text=${encodeURIComponent(message)}`;
+            window.open(url, '_blank');
+        }
+
         // Estado padrão inicial do cardápio (sincronizado na nuvem via chave 'menu_data_v2')
         const DEFAULT_MENU_STATE = {
             header: {
@@ -629,6 +1058,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                     const priceHTML = isSoldOut
                         ? `<span class="font-display text-sm sm:text-base font-bold text-red-400/90 line-through whitespace-nowrap">${escapeHtml(item.price)}</span>`
                         : `<span class="font-display text-base sm:text-lg font-bold ${item.style === 'gold' ? 'text-brave-cream' : (item.style === 'fire' ? 'text-brave-fire' : 'text-brave-gold')} whitespace-nowrap">${escapeHtml(item.price)}</span>`;
+                    const cartControlHTML = renderCartButtonHTML(item);
 
                     if (item.style === 'gold') {
                         return `
@@ -644,6 +1074,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                                     ${priceHTML}
                                 </div>
                                 <p class="text-[11px] sm:text-xs text-brave-cream/90 leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
+                                ${cartControlHTML}
                             </div>
                         </article>`;
                     }
@@ -662,6 +1093,7 @@ NOTIFY pgrst, 'reload schema';</textarea>
                                     ${priceHTML}
                                 </div>
                                 <p class="text-[11px] sm:text-xs text-brave-cream/90 leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
+                                ${cartControlHTML}
                             </div>
                         </article>`;
                     }
@@ -679,10 +1111,12 @@ NOTIFY pgrst, 'reload schema';</textarea>
                                 ${priceHTML}
                             </div>
                             <p class="text-[11px] sm:text-xs text-brave-muted leading-snug mt-0.5">${formatDescriptionHTML(item.desc)}</p>
+                            ${cartControlHTML}
                         </div>
                     </article>`;
                 }).join('');
             });
+            updateCartUI();
         }
 
         // Renderiza os cartões de edição, ordenação, disponibilidade, cadastro e remoção no modal Admin
@@ -1324,6 +1758,21 @@ NOTIFY pgrst, 'reload schema';</textarea>
 
             await fetchMenuPhotos();
             startAutoSync();
+        }
+
+        let toastTimeout = null;
+        function showToast(msg) {
+            const toast = document.getElementById('toastMessage');
+            const text = document.getElementById('toastText');
+            if (!toast || !text) return;
+            text.textContent = msg;
+            toast.classList.remove('opacity-0');
+            toast.classList.add('opacity-100');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.remove('opacity-100');
+                toast.classList.add('opacity-0');
+            }, 3200);
         }
 
         window.addEventListener('DOMContentLoaded', initApp);
